@@ -1,0 +1,16 @@
+# Docs: https://github.com/PokerFacowaty/flac2lib
+flac_albums_dir:
+dst_albums_dir:
+entire: False
+num_albums_to_show: 10
+dir_name_prompts: True
+latest: False
+get_cover_art: True
+default_cover_art_name: cover # copied straight to the album folder
+cover_art_suffixes: ['jpg', 'png', 'jpeg']
+destination_format: mp3
+ffmpeg_params: -q:a 2
+# For the MP3 preset, use the "ffmpeg option" table in this article
+# of the ffmpeg docs:
+# https://trac.ffmpeg.org/wiki/Encode/MP3
+# Use for other formats accordingly.
