@@ -78,3 +78,4 @@ python3 flac2lib.py
 - [ ] Fixing main cover art for multi-CD albums (is copied to the main directory and therefore usually not found by players which are looking inside the final (ex. `Disc 1` directory))
 - [ ] Warning about potential non-allowed characters in filepaths (especially with Windows in mind)
 - [ ] An option to download cover art (MusicBrainz? covers.musichoarders.xyz?)
+- [ ] Marking the album as a compilation
