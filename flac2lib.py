@@ -100,9 +100,11 @@ def copy_cover_art(flac_album_path, dst_album_path,
         all_images_paths.extend(list(flac_album_path.rglob(f"*.{suffix}")))
 
     print("\n\n--- Cover Art ---\n")
-    for nr, f in enumerate([x.relative_to(flac_album_path)
-                            for x in all_images_paths]):
-        print(nr, ": ", f)
+    for nr, (fpath, fname) in enumerate([(x, x.relative_to(flac_album_path))
+                                         for x in all_images_paths]):
+        img = cv2.imread(str(fpath))
+        h, w, _ = img.shape
+        print(nr, ": ", fname, f" ({w}x{h})")
 
     print("\n<number> - pick cover art to be copied to the"
           + f"destination folder as \"{default_cover_art_name}\"."
