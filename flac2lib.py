@@ -34,6 +34,18 @@ def get_flac_album_path(flac_albums_dir, num_albums_to_show, latest):
     return folder_paths_to_show[int(answer)]
 
 
+def ask_if_compilation():
+    print("\n\n--- Compilation ---\n")
+    print("Is the album a compilation? (adds compilation = 1 to the tags)")
+    print("[y] / [n]")
+    while True:
+        answer = input(':')
+        if answer.lower() == "y":
+            return True
+        elif answer.lower() == "n":
+            return False
+
+
 def pick_songs(flac_album_path, entire):
     '''Fetches all the flac files found in the album path, takes user input
        on which ones should be chosen and returns the paths for those. Returns
@@ -161,8 +173,8 @@ def copy_cover_art(flac_album_path, dst_album_path,
     return
 
 
-def convert_songs(dst_album_path, song_picks_paths,
-                  flac_album_path, ffmpeg_params, dst_format):
+def convert_songs(dst_album_path, song_picks_paths, flac_album_path,
+                  ffmpeg_params, dst_format, is_compilation):
     '''Converts all flac files into dst_format preserving subdirs. Checks if
        songs already exist. Makes subdirs if they don't exist.'''
 
@@ -176,9 +188,12 @@ def convert_songs(dst_album_path, song_picks_paths,
             sys.stdout.flush()
             seg = AudioSegment.from_file(song_flac)
             dst_song_path.parent.mkdir(parents=True, exist_ok=True)
+            tags_ = mediainfo(song_flac).get('TAG', {})
+            if is_compilation:
+                tags_['compilation'] = '1'
             seg.export(dst_song_path, format=dst_format,
                        parameters=ffmpeg_params.split(),
-                       tags=mediainfo(song_flac).get('TAG', {}))
+                       tags=tags_)
             print("DONE")
         else:
             print(f"\n{dst_song_path.stem} already exists, skipping...")
@@ -190,7 +205,8 @@ def main():
     opts, args = getopt.getopt(sys.argv[1:], "hes:n:d:c:l",
                                ["help", "entire", "source=", "number=",
                                 "destination=", "config=", "latest",
-                                "skip-cover-art", "skip-dir-prompts"])
+                                "skip-cover-art", "skip-dir-prompts",
+                                "compilation", "not-compilation"])
 
     config_file = 'config.yaml'
     flac_album_path = None
@@ -199,6 +215,7 @@ def main():
     latest = None
     get_cover_art = None
     dir_prompts = None
+    is_compilation = None
 
     for opt, arg in opts:
         if opt in ["-h", "--help"]:
@@ -214,6 +231,10 @@ def main():
                   "\n[--skip-cover-art] - skip copying the cover art",
                   "\n[--skip-dir-prompts] - use ARTIST and ALBUM tags for",
                   "directory names without asking",
+                  "\n[--compilation] - mark the album as compilation and skip",
+                  "the question",
+                  "\n[--not-compilation] - mark the album as not",
+                  "a compilation and skip the question",
                   "\nDocs: https://github.com/PokerFacowaty/flac2lib\n")
             return
         elif opt in ["-c", "--config"]:
@@ -230,6 +251,10 @@ def main():
             get_cover_art = False
         elif opt in ["--skip-dir-prompts"]:
             dir_prompts = False
+        elif opt in ["--compilation"]:
+            is_compilation = True
+        elif opt in ["--not-compilation"]:
+            is_compilation = False
 
     config = yaml.safe_load(open(config_file))
     flac_albums_dir = Path(config["flac_albums_dir"])
@@ -255,6 +280,9 @@ def main():
         flac_album_path = get_flac_album_path(flac_albums_dir,
                                               num_albums_to_show, latest)
 
+    if is_compilation is None:
+        is_compilation = ask_if_compilation()
+
     song_picks_paths = pick_songs(flac_album_path, entire)
 
     if dst_album_path is None:
@@ -265,8 +293,8 @@ def main():
         copy_cover_art(flac_album_path, dst_album_path,
                        default_cover_art_name, covert_art_suffixes)
 
-    convert_songs(dst_album_path, song_picks_paths,
-                  flac_album_path, ffmpeg_params, dst_format)
+    convert_songs(dst_album_path, song_picks_paths, flac_album_path,
+                  ffmpeg_params, dst_format, is_compilation)
 
 
 if __name__ == "__main__":

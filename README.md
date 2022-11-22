@@ -70,6 +70,8 @@ python3 flac2lib.py
 - `-l, --latest` - only convert the most recently modified folder in the flac albums directory
 - `--skip-cover-art` - skip the process of copying covert art entirely
 - `--skip-dir-prompts` - skip prompts about album/artist folder paths, use ARTIST and ALBUM tags for dir and subdir without asking
+- `--compilation` - skip the prompt about whether a compilation tag should be added, mark the album as a compilation
+- `--not-compilation` - see above
 
 
 # Possible future improvements:
@@ -78,4 +80,4 @@ python3 flac2lib.py
 - [ ] Fixing main cover art for multi-CD albums (is copied to the main directory and therefore usually not found by players which are looking inside the final (ex. `Disc 1` directory))
 - [ ] Warning about potential non-allowed characters in filepaths (especially with Windows in mind)
 - [ ] An option to download cover art (MusicBrainz? covers.musichoarders.xyz?)
-- [ ] Marking the album as a compilation
+- [x] Marking the album as a compilation
