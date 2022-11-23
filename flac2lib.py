@@ -109,7 +109,7 @@ def get_dst_album_path(song_picks_paths, dst_albums_dir, dir_prompts):
         dst_album_path = dst_album_path / f"{album_name}"
 
     if dir_prompts:
-        print(f"If the destination {dst_album_path} needs another directory "
+        print(f"\nIf the destination {dst_album_path} needs another directory "
               + "(for example 'CD1' for multi-CD albums, type it in now. "
               + "Otherwise, leave blank.")
         add_dir_answer = input(":")
@@ -214,9 +214,10 @@ def get_cover_art(flac_album_path, artist_name, album_name, dst_album_path,
 
 def download_cover_art(artist_name, album_name, dst_album_path,
                        default_cover_art_name):
-    '''Prepares a query for covers.musichoaders.xyz based on assumptions and
-       inputs. Takes the link to the chosen cover art and downloads with
-       a preffered main cover art filename.'''
+    '''Prepares a query for covers.musichoaders.xyz by asking whether artist
+       name should be used and using the album name provided earlier. Takes
+       the link to the chosen cover art and downloads with a preffered main
+       cover art filename.'''
     print("\n\n--- Searching and downloading cover art ---\n")
     print(f"Proposed artist name: " + f"{artist_name}")
     print("Type \"y\" to confirm or enter the desired artist name instead,",
@@ -229,20 +230,12 @@ def download_cover_art(artist_name, album_name, dst_album_path,
     else:
         artist = artist_name_answer
 
-    print(f"\nProposed album name: " + f"{album_name}")
-    print("Type \"y\" to confirm or enter the desired album name instead")
-    album_name_answer = input(':')
-    if album_name_answer.lower() == "y":
-        album = album_name
-    else:
-        album = album_name_answer
-
     baseurl = "https://covers.musichoarders.xyz/"
     params = {}
 
     if artist is not None:
         params['artist'] = artist
-    params['album'] = album
+    params['album'] = album_name
 
     url = baseurl + "?" + urlencode(params)
     webbrowser.open(url)
