@@ -245,15 +245,21 @@ def convert_songs(dst_album_path, song_picks_paths, flac_album_path,
        songs already exist. Makes subdirs if they don't exist.'''
 
     for song_flac in song_picks_paths:
-        dst_song_path = (dst_album_path
-                         / song_flac.parent.relative_to(flac_album_path)
-                         / (song_flac.stem + "." + dst_format))
+        if (str(dst_album_path.name)
+                == str(song_flac.parent.relative_to(flac_album_path))):
+            dst_song_path = (dst_album_path
+                             / (song_flac.stem + "." + dst_format))
+        else:
+            dst_song_path = (dst_album_path
+                             / song_flac.parent.relative_to(flac_album_path)
+                             / (song_flac.stem + "." + dst_format))
         print()
         if not dst_song_path.exists():
             print("Processing \"" + song_flac.name + "\"...", end='')
             sys.stdout.flush()
             seg = AudioSegment.from_file(song_flac)
-            dst_song_path.parent.mkdir(parents=True, exist_ok=True)
+            if not dst_song_path.parent.exists():
+                dst_song_path.parent.mkdir(parents=True, exist_ok=True)
             tags_ = mediainfo(song_flac).get('TAG', {})
             if is_compilation:
                 tags_['compilation'] = '1'
