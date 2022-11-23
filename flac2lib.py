@@ -12,26 +12,30 @@ import webbrowser
 
 
 def get_flac_album_path(flac_albums_dir, num_albums_to_show, latest):
-    '''Fetches folders inside flac_albums_dir sorted by their modification
-       time, takes user input on which one should be chosen; returns the first
-       one without asking if 'latest' is set to True'''
+    '''Fetches folders inside flac_albums_dir containing flac files (note that
+       with multi-CD albums, each CD is treated as a separate album since that
+       is the best way of dealing with those I thought of), sorts them
+       by their modification time, takes user input on which one should be
+       chosen; returns the first one without asking if 'latest' is set
+       to True'''
 
-    folder_paths_to_show = sorted([x for x in flac_albums_dir.glob("*")
-                                  if x.is_dir()],
-                                  key=lambda x: x.lstat().st_mtime,
-                                  reverse=True)
-    if not folder_paths_to_show:
-        raise Exception("No directories found in the flac_album_path "
-                        + f"({flac_albums_dir})")
+    dirs_inside_fad = [x for x in flac_albums_dir.glob("*") if x.is_dir()]
+    folders_with_flacs = [x.parent for x in flac_albums_dir.rglob("*")
+                          if x.suffix == '.flac']
+
+    # sorts the albums by their modification time, most recent first
+    folder_paths_to_show = sorted(folders_with_flacs, key=lambda
+                                  x: x.lstat().st_mtime, reverse=True)
 
     if latest:
         return folder_paths_to_show[0]
 
     print("\n\n--- Albums ---\n")
-    folder_names_to_show = [x.name for x in folder_paths_to_show]
+    rel_folder_paths_to_show = [x.relative_to(flac_albums_dir)
+                                for x in folder_paths_to_show]
 
     for i in range(min(len(folder_paths_to_show), num_albums_to_show)):
-        print(f"{i}: ", str(folder_names_to_show[i]))
+        print(f"{i}: ", str(rel_folder_paths_to_show[i]))
 
     answer = input("\nChoose the album\n:")
     return folder_paths_to_show[int(answer)]
@@ -72,7 +76,11 @@ def pick_songs(flac_album_path, entire):
 def get_dst_album_path(song_picks_paths, dst_albums_dir, dir_prompts):
     '''Proposes an artist/album combo for the destination dir and subdir names
        based on the flac's metadata. Takes confirmation or custom names as
-       input. Constructs and returns a full destination folder path.'''
+       input. Asks if there is an additional folder needed (such as 'CD1' for
+       multi-CD albums), since doing so automatically would be overly complex
+       and only cover some cases. The asking proccess is obviously skipped
+       if the --skip-dir-prompts argument is used. Constructs and returns
+       a full destination folder path.'''
 
     artist_name = mediainfo(song_picks_paths[0]).get('TAG', None)['ARTIST']
     album_name = mediainfo(song_picks_paths[0]).get('TAG', None)['ALBUM']
@@ -99,6 +107,17 @@ def get_dst_album_path(song_picks_paths, dst_albums_dir, dir_prompts):
             dst_album_path = dst_album_path / album_name_answer
     else:
         dst_album_path = dst_album_path / f"{album_name}"
+
+    if dir_prompts:
+        print(f"If the destination {dst_album_path} needs another directory "
+              + "(for example 'CD1' for multi-CD albums, type it in now. "
+              + "Otherwise, leave blank.")
+        add_dir_answer = input(":")
+        if add_dir_answer == "":
+            pass
+        else:
+            dst_album_path = dst_album_path / add_dir_answer
+
     return artist_name, album_name, dst_album_path
 
 
