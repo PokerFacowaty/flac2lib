@@ -1,11 +1,14 @@
 from pydub import AudioSegment
 from pydub.utils import mediainfo
 from pathlib import Path
+from urllib.parse import urlencode
+from urllib.request import urlopen
 import getopt
 import sys
 import yaml
 import cv2
 import shutil
+import webbrowser
 
 
 def get_flac_album_path(flac_albums_dir, num_albums_to_show, latest):
@@ -96,15 +99,16 @@ def get_dst_album_path(song_picks_paths, dst_albums_dir, dir_prompts):
             dst_album_path = dst_album_path / album_name_answer
     else:
         dst_album_path = dst_album_path / f"{album_name}"
-    return dst_album_path
+    return artist_name, album_name, dst_album_path
 
 
-def copy_cover_art(flac_album_path, dst_album_path,
-                   default_cover_art_name, cover_art_suffixes):
+def get_cover_art(flac_album_path, artist_name, album_name, dst_album_path,
+                  default_cover_art_name, cover_art_suffixes):
     '''Fetches all images with proper suffixes found in the flac_album_path.
        Offers options to choose a main cover art file (copied directly into the
        destination folder), copy additional cover art preserving the folder
-       structure and preview files (using OpenCV). Checks for existing files
+       structure and preview files (using OpenCV) or download a main cover art
+       file from covers.musichoarders.xyz. Checks for existing files
        before copying.'''
 
     all_images_paths = []
@@ -112,18 +116,32 @@ def copy_cover_art(flac_album_path, dst_album_path,
         all_images_paths.extend(list(flac_album_path.rglob(f"*.{suffix}")))
 
     print("\n\n--- Cover Art ---\n")
-    for nr, (fpath, fname) in enumerate([(x, x.relative_to(flac_album_path))
-                                         for x in all_images_paths]):
-        img = cv2.imread(str(fpath))
-        h, w, _ = img.shape
-        print(nr, ": ", fname, f" ({w}x{h})")
+    if all_images_paths:
+        for nr, (fpath, fname) in enumerate([(x, x.relative_to(
+                                                    flac_album_path))
+                                             for x in all_images_paths]):
+            img = cv2.imread(str(fpath))
+            h, w, _ = img.shape
+            print(nr, ": ", fname, f" ({w}x{h})")
+    else:
+        print("No cover art found. Would you like to download cover art from",
+              "covers.musichoarders.xyz?\n[y] / [n]")
+        answer = input(":")
+        if answer.lower() == "y":
+            download_cover_art(artist_name, album_name, dst_album_path,
+                               default_cover_art_name)
+        elif answer.lower() == "n":
+            return
 
-    print("\n<number> - pick cover art to be copied to the"
-          + f"destination folder as \"{default_cover_art_name}\"."
-          + "\np<number> - preview the image \nc<number> - copy "
-          + "an additional file directly without changing "
-          + "its name\nq - finish copying metadata and proceed\n"
-          + "h - see this prompt again\n")
+    help_ = ("\n<number> - pick cover art to be copied to the"
+             + f"destination folder as \"{default_cover_art_name}\"."
+             + "\np<number> - preview the image \nc<number> - copy "
+             + "an additional file directly without changing "
+             + "its name\nd - download main cover art from "
+             + "covers.musichoarders.xyz"
+             + "\nq - finish copying cover art and proceed\n"
+             + "h - see this prompt again\n")
+    print(help_)
 
     while True:
         answer = input(":")
@@ -162,15 +180,63 @@ def copy_cover_art(flac_album_path, dst_album_path,
             print()
             for nr, f in enumerate([x.name for x in all_images_paths]):
                 print(nr, ": ", f)
-            print("\n<number> - pick cover art to be copied to the"
-                  + f"destination folder as \"{default_cover_art_name}\"."
-                  + "\np<number> - preview the image \nc<number> - copy "
-                  + "an additional file directly without changing "
-                  + "its name\nq - finish copying metadata and proceed\n"
-                  + "h - see this prompt again\n")
+            print(help_)
+        elif answer[0] == "d":
+            download_cover_art(artist_name, album_name, dst_album_path,
+                               default_cover_art_name)
+            print(help_)
+            # printing it once again since we're still at choosing the ca
+            # and the user might not realise that with just a ":" at the
+            # bottom of the terminal
         elif answer[0] == "q":
             break
     return
+
+
+def download_cover_art(artist_name, album_name, dst_album_path,
+                       default_cover_art_name):
+    '''Prepares a query for covers.musichoaders.xyz based on assumptions and
+       inputs. Takes the link to the chosen cover art and downloads with
+       a preffered main cover art filename.'''
+    print("\n\n--- Searching and downloading cover art ---\n")
+    print(f"Proposed artist name: " + f"{artist_name}")
+    print("Type \"y\" to confirm or enter the desired artist name instead,",
+          "leave blank to not search for a specific artist")
+    artist_name_answer = input(':')
+    if artist_name_answer.lower() == "y":
+        artist = artist_name
+    elif artist_name_answer == "":
+        artist = None
+    else:
+        artist = artist_name_answer
+
+    print(f"\nProposed album name: " + f"{album_name}")
+    print("Type \"y\" to confirm or enter the desired album name instead")
+    album_name_answer = input(':')
+    if album_name_answer.lower() == "y":
+        album = album_name
+    else:
+        album = album_name_answer
+
+    baseurl = "https://covers.musichoarders.xyz/"
+    params = {}
+
+    if artist is not None:
+        params['artist'] = artist
+    params['album'] = album
+
+    url = baseurl + "?" + urlencode(params)
+    webbrowser.open(url)
+
+    print("\nChoose a cover art, click on it, then paste its link here")
+    cover_art_link = input(':')
+    dst_album_path.mkdir(parents=True, exist_ok=True)
+    covert_art_file = (dst_album_path / (default_cover_art_name
+                       + cover_art_link[cover_art_link.rfind("."):]))
+    with urlopen(cover_art_link) as resp, open(covert_art_file, "wb+") as f:
+        shutil.copyfileobj(resp, f)
+
+    print(f"\nSuccesfully downloaded {covert_art_file.name}")
 
 
 def convert_songs(dst_album_path, song_picks_paths, flac_album_path,
@@ -213,7 +279,7 @@ def main():
     dst_album_path = None
     entire = None
     latest = None
-    get_cover_art = None
+    cover_art = None
     dir_prompts = None
     is_compilation = None
 
@@ -248,7 +314,7 @@ def main():
         elif opt in ["-l", "--latest"]:
             latest = True
         elif opt in ["--skip-cover-art"]:
-            get_cover_art = False
+            cover_art = False
         elif opt in ["--skip-dir-prompts"]:
             dir_prompts = False
         elif opt in ["--compilation"]:
@@ -266,10 +332,10 @@ def main():
         dir_prompts = config["dir_name_prompts"]
     if latest is None:
         latest = config["latest"]
-    if get_cover_art is None:
-        get_cover_art = config["get_cover_art"]
+    if cover_art is None:
+        cover_art = config["get_cover_art"]
     default_cover_art_name = config["default_cover_art_name"]
-    covert_art_suffixes = config["cover_art_suffixes"]
+    cover_art_suffixes = config["cover_art_suffixes"]
     dst_format = config["destination_format"]
     ffmpeg_params = config["ffmpeg_params"]
 
@@ -286,12 +352,15 @@ def main():
     song_picks_paths = pick_songs(flac_album_path, entire)
 
     if dst_album_path is None:
-        dst_album_path = get_dst_album_path(song_picks_paths, dst_albums_dir,
-                                            dir_prompts)
+        artist_name, album_name, dst_album_path = get_dst_album_path(
+                                                    song_picks_paths,
+                                                    dst_albums_dir,
+                                                    dir_prompts)
 
-    if get_cover_art:
-        copy_cover_art(flac_album_path, dst_album_path,
-                       default_cover_art_name, covert_art_suffixes)
+    if cover_art:
+        get_cover_art(flac_album_path, artist_name, album_name,
+                      dst_album_path, default_cover_art_name,
+                      cover_art_suffixes)
 
     convert_songs(dst_album_path, song_picks_paths, flac_album_path,
                   ffmpeg_params, dst_format, is_compilation)
