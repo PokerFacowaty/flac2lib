@@ -19,9 +19,10 @@ def get_flac_album_path(flac_albums_dir, num_albums_to_show, latest):
        chosen; returns the first one without asking if 'latest' is set
        to True'''
 
-    dirs_inside_fad = [x for x in flac_albums_dir.glob("*") if x.is_dir()]
-    folders_with_flacs = [x.parent for x in flac_albums_dir.rglob("*")
-                          if x.suffix == '.flac']
+    folders_with_flacs = []
+    for x in flac_albums_dir.rglob("*"):
+        if x.suffix == ".flac" and x.parent not in folders_with_flacs:
+            folders_with_flacs.append(x.parent)
 
     # sorts the albums by their modification time, most recent first
     folder_paths_to_show = sorted(folders_with_flacs, key=lambda
