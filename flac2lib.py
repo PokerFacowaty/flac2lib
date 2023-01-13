@@ -150,6 +150,7 @@ def get_cover_art(flac_album_path, artist_name, album_name, dst_album_path,
         if answer.lower() == "y":
             download_cover_art(artist_name, album_name, dst_album_path,
                                default_cover_art_name)
+            return
         elif answer.lower() == "n":
             return
 
