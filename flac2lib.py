@@ -63,7 +63,7 @@ def pick_songs(flac_album_path, entire):
 
     if not entire:
         print("\n\n--- Songs ---\n")
-        for nr, f in enumerate([x.name for x in all_flac_files_paths]):
+        for nr, f in enumerate(sorted([x.name for x in all_flac_files_paths])):
             print(nr, ": ", f)
         print()
 
