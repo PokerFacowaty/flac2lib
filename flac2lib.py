@@ -14,9 +14,9 @@ import webbrowser
 class AlbumToProcess:
     def __init__(self, dst_album_path, song_picks_paths, flac_album_path,
                  ffmpeg_params, dst_format, is_compilation):
-        self.dst_album_path = dst_album_path
-        self.song_picks_paths = song_picks_paths
-        self.flac_album_path = flac_album_path
+        self.dst_path = dst_album_path
+        self.picks_paths = song_picks_paths
+        self.flac_path = flac_album_path
         self.ffmpeg_params = ffmpeg_params
         self.dst_format = dst_format
         self.is_compilation = is_compilation
@@ -381,20 +381,19 @@ def download_cover_art(artist_name, album_name, dst_album_path,
     print(f"\nSuccesfully downloaded {covert_art_file.name}")
 
 
-def convert_songs(dst_album_path, song_picks_paths, flac_album_path,
-                  ffmpeg_params, dst_format, is_compilation):
+def convert_songs(album):
     '''Converts all flac files into dst_format preserving subdirs. Checks if
        songs already exist. Makes subdirs if they don't exist.'''
 
-    for song_flac in song_picks_paths:
-        if (str(dst_album_path.name)
-                == str(song_flac.parent.relative_to(flac_album_path))):
-            dst_song_path = (dst_album_path
-                             / (song_flac.stem + "." + dst_format))
+    for song_flac in album.picks_paths:
+        if (str(album.dst_path.name)
+                == str(song_flac.parent.relative_to(album.flac_path))):
+            dst_song_path = (album.dst_path
+                             / (song_flac.stem + "." + album.dst_format))
         else:
-            dst_song_path = (dst_album_path
-                             / song_flac.parent.relative_to(flac_album_path)
-                             / (song_flac.stem + "." + dst_format))
+            dst_song_path = (album.dst_path
+                             / song_flac.parent.relative_to(album.flac_path)
+                             / (song_flac.stem + "." + album.dst_format))
         print()
         if not dst_song_path.exists():
             print("Processing \"" + song_flac.name + "\"...", end='')
@@ -403,10 +402,10 @@ def convert_songs(dst_album_path, song_picks_paths, flac_album_path,
             if not dst_song_path.parent.exists():
                 dst_song_path.parent.mkdir(parents=True, exist_ok=True)
             tags_ = mediainfo(song_flac).get('TAG', {})
-            if is_compilation:
+            if album.is_compilation:
                 tags_['compilation'] = '1'
-            seg.export(dst_song_path, format=dst_format,
-                       parameters=ffmpeg_params.split(),
+            seg.export(dst_song_path, format=album.dst_format,
+                       parameters=album.ffmpeg_params.split(),
                        tags=tags_)
             print("DONE")
         else:
