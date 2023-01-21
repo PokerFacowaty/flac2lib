@@ -103,7 +103,8 @@ def main():
     while process_album(flac_album_path, flac_albums_dir, num_albums_to_show,
                         latest, is_compilation, entire, dst_albums_dir,
                         dir_prompts, cover_art, dst_album_path,
-                        default_cover_art_name, cover_art_suffixes):
+                        default_cover_art_name, cover_art_suffixes,
+                        ffmpeg_params, dst_format):
         continue
 
     for album in queue:
@@ -113,7 +114,7 @@ def main():
 def process_album(flac_album_path, flac_albums_dir, num_albums_to_show, latest,
                   is_compilation, entire, dst_albums_dir, dir_prompts,
                   cover_art, dst_album_path, default_cover_art_name,
-                  cover_art_suffixes):
+                  cover_art_suffixes, ffmpeg_params, dst_format):
     if flac_album_path is None:
         flac_album_path = get_flac_album_path(flac_albums_dir,
                                               num_albums_to_show, latest)
@@ -133,6 +134,10 @@ def process_album(flac_album_path, flac_albums_dir, num_albums_to_show, latest,
         get_cover_art(flac_album_path, artist_name, album_name,
                       dst_album_path, default_cover_art_name,
                       cover_art_suffixes)
+
+    queue.append(AlbumToProcess(dst_album_path, song_picks_paths,
+                                flac_album_path, ffmpeg_params, dst_format,
+                                is_compilation))
 
     answer = input("Would you like to add process more albums? [y/n]")
     if answer.lower() == "y":
