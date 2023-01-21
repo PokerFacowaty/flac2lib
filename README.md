@@ -75,7 +75,7 @@ python3 flac2lib.py
 
 
 # Possible future improvements:
-- [ ] Fixing case-sensitivity for retrieving artist and album names from tags
+- [x] Fixing case-sensitivity for retrieving artist and album names from tags
 - [x] Showing covert art's size when listing
 - [x] Fixing main cover art for multi-CD albums (is copied to the main directory and therefore usually not found by players which are looking inside the final (ex. `Disc 1` directory))
 - [ ] Warning about potential non-allowed characters in filepaths (especially with Windows in mind)
