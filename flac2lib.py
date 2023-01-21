@@ -224,31 +224,62 @@ def get_dst_album_path(song_picks_paths, dst_albums_dir, dir_prompts):
        if the --skip-dir-prompts argument is used. Constructs and returns
        a full destination folder path.'''
 
-    artist_name = mediainfo(song_picks_paths[0]).get('TAG', None)['ARTIST']
-    album_name = mediainfo(song_picks_paths[0]).get('TAG', None)['ALBUM']
+    if ('TAG' in mediainfo(song_picks_paths[0])
+       and 'ARTIST' in mediainfo(song_picks_paths[0])['TAG']):
+        artist_name = mediainfo(song_picks_paths[0]).get('TAG', None)['ARTIST']
+    elif ('TAG' in mediainfo(song_picks_paths[0])
+          and 'artist' in mediainfo(song_picks_paths[0])['TAG']):
+        artist_name = mediainfo(song_picks_paths[0]).get('TAG', None)['artist']
+    else:
+        artist_name = None
+
+    if ('TAG' in mediainfo(song_picks_paths[0])
+       and 'ALBUM' in mediainfo(song_picks_paths[0])['TAG']):
+        album_name = mediainfo(song_picks_paths[0]).get('TAG', None)['ALBUM']
+    elif ('TAG' in mediainfo(song_picks_paths[0])
+          and 'album' in mediainfo(song_picks_paths[0])['TAG']):
+        album_name = mediainfo(song_picks_paths[0]).get('TAG', None)['album']
+    else:
+        album_name = None
 
     if dir_prompts:
         print("\n\n--- Destination folder name ---\n")
-        print(f"Proposed artist folder name: " + f"{artist_name}")
-        print("Type \"y\" to confirm or enter the desired artist name instead")
+        if artist_name:
+            print(f"Proposed artist folder name: " + f"{artist_name}")
+            print("Type \"y\" to confirm or enter the desired artist name "
+                  + "instead")
+        else:
+            print("No artist name found. Please enter the desired name.")
         artist_name_answer = input(":")
-        if artist_name_answer.lower() == "y":
+        if artist_name and artist_name_answer.lower() == "y":
             dst_album_path = dst_albums_dir / f"{artist_name}"
         else:
             dst_album_path = dst_albums_dir / artist_name_answer
-    else:
+    elif not dir_prompts and artist_name:
         dst_album_path = dst_albums_dir / f"{artist_name}"
+    elif not dir_prompts and not artist_name:
+        print("No artist name found. Please enter the desired name.")
+        artist_name_answer = input(":")
+        dst_album_path = dst_albums_dir / f"{artist_name_answer}"
 
     if dir_prompts:
-        print(f"\nProposed album folder name: " + f"{album_name}")
-        print("Type \"y\" to confirm or enter the desired album name instead")
+        if album_name:
+            print(f"\nProposed album folder name: " + f"{album_name}")
+            print("Type \"y\" to confirm or enter the desired album name "
+                  + "instead")
+        else:
+            print("No album name found. Please enter the desired name.")
         album_name_answer = input(":")
-        if album_name_answer.lower() == "y":
+        if album_name and album_name_answer.lower() == "y":
             dst_album_path = dst_album_path / f"{album_name}"
         else:
             dst_album_path = dst_album_path / album_name_answer
-    else:
+    elif not dir_prompts and album_name:
         dst_album_path = dst_album_path / f"{album_name}"
+    elif not dir_prompts and not artist_name:
+        print("No album name found. Please enter the desired name.")
+        album_name_answer = input(":")
+        dst_album_path = dst_albums_dir / f"{album_name_answer}"
 
     if dir_prompts:
         print(f"\nIf the destination {dst_album_path} needs another directory "
