@@ -81,3 +81,4 @@ python3 flac2lib.py
 - [ ] Warning about potential non-allowed characters in filepaths (especially with Windows in mind)
 - [x] An option to download cover art (MusicBrainz? covers.musichoarders.xyz?)
 - [x] Marking the album as a compilation
+- [x] Queueing files as to not wait for conversions
