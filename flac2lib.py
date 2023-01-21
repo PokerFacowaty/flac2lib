@@ -139,7 +139,7 @@ def process_album(flac_album_path, flac_albums_dir, num_albums_to_show, latest,
                                 flac_album_path, ffmpeg_params, dst_format,
                                 is_compilation))
 
-    answer = input("Would you like to add process more albums? [y/n]")
+    answer = input("\nWould you like to add process more albums? [y/n]\n")
     if answer.lower() == "y":
         return True
     else:
