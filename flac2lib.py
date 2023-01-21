@@ -101,7 +101,8 @@ def main():
     print("https://github.com/PokerFacowaty/flac2lib")
 
     while process_album(flac_album_path, flac_albums_dir, num_albums_to_show,
-                        latest, entire, dst_albums_dir, dir_prompts, cover_art,
+                        latest, is_compilation, entire, dst_albums_dir,
+                        dir_prompts, cover_art, dst_album_path,
                         default_cover_art_name, cover_art_suffixes):
         continue
 
@@ -110,8 +111,9 @@ def main():
 
 
 def process_album(flac_album_path, flac_albums_dir, num_albums_to_show, latest,
-                  entire, dst_albums_dir, dir_prompts, cover_art,
-                  default_cover_art_name, cover_art_suffixes):
+                  is_compilation, entire, dst_albums_dir, dir_prompts,
+                  cover_art, dst_album_path, default_cover_art_name,
+                  cover_art_suffixes):
     if flac_album_path is None:
         flac_album_path = get_flac_album_path(flac_albums_dir,
                                               num_albums_to_show, latest)
