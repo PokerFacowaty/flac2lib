@@ -26,6 +26,9 @@ queue = []
 
 
 def main():
+    '''Parses the config file and initiates a loop of calling process_album()
+       until the user decides they're done with choosing albums, then proceeds
+       to convert all the albums in the queue.'''
     opts, args = getopt.getopt(sys.argv[1:], "hes:n:d:c:l",
                                ["help", "entire", "source=", "number=",
                                 "destination=", "config=", "latest",
@@ -115,6 +118,9 @@ def process_album(flac_album_path, flac_albums_dir, num_albums_to_show, latest,
                   is_compilation, entire, dst_albums_dir, dir_prompts,
                   cover_art, dst_album_path, default_cover_art_name,
                   cover_art_suffixes, ffmpeg_params, dst_format):
+    '''Gets all the info that is needed about the album and stores it in an
+       AlbumToProcess object inside the queue list.'''
+
     if flac_album_path is None:
         flac_album_path = get_flac_album_path(flac_albums_dir,
                                               num_albums_to_show, latest)
