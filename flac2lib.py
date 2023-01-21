@@ -11,6 +11,20 @@ import shutil
 import webbrowser
 
 
+class AlbumToProcess:
+    def __init__(self, dst_album_path, song_picks_paths, flac_album_path,
+                 ffmpeg_params, dst_format, is_compilation):
+        self.dst_album_path = dst_album_path
+        self.song_picks_paths = song_picks_paths
+        self.flac_album_path = flac_album_path
+        self.ffmpeg_params = ffmpeg_params
+        self.dst_format = dst_format
+        self.is_compilation = is_compilation
+
+
+queue = []
+
+
 def main():
     opts, args = getopt.getopt(sys.argv[1:], "hes:n:d:c:l",
                                ["help", "entire", "source=", "number=",
@@ -86,6 +100,18 @@ def main():
     print("\n----- flac2lib.py by PokerFacowaty -----")
     print("https://github.com/PokerFacowaty/flac2lib")
 
+    while process_album(flac_album_path, flac_albums_dir, num_albums_to_show,
+                        latest, entire, dst_albums_dir, dir_prompts, cover_art,
+                        default_cover_art_name, cover_art_suffixes):
+        continue
+
+    for album in queue:
+        convert_songs(album)
+
+
+def process_album(flac_album_path, flac_albums_dir, num_albums_to_show, latest,
+                  entire, dst_albums_dir, dir_prompts, cover_art,
+                  default_cover_art_name, cover_art_suffixes):
     if flac_album_path is None:
         flac_album_path = get_flac_album_path(flac_albums_dir,
                                               num_albums_to_show, latest)
@@ -106,8 +132,11 @@ def main():
                       dst_album_path, default_cover_art_name,
                       cover_art_suffixes)
 
-    convert_songs(dst_album_path, song_picks_paths, flac_album_path,
-                  ffmpeg_params, dst_format, is_compilation)
+    answer = input("Would you like to add process more albums? [y/n]")
+    if answer.lower() == "y":
+        return True
+    else:
+        return False
 
 
 def get_flac_album_path(flac_albums_dir, num_albums_to_show, latest):
