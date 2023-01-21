@@ -11,6 +11,105 @@ import shutil
 import webbrowser
 
 
+def main():
+    opts, args = getopt.getopt(sys.argv[1:], "hes:n:d:c:l",
+                               ["help", "entire", "source=", "number=",
+                                "destination=", "config=", "latest",
+                                "skip-cover-art", "skip-dir-prompts",
+                                "compilation", "not-compilation"])
+
+    config_file = 'config.yaml'
+    flac_album_path = None
+    dst_album_path = None
+    entire = None
+    latest = None
+    cover_art = None
+    dir_prompts = None
+    is_compilation = None
+
+    for opt, arg in opts:
+        if opt in ["-h", "--help"]:
+            print("\n----- flac2lib by PokerFacowaty -----",
+                  "\nPossible options:",
+                  "\n[-h, --help] - open this prompt",
+                  "\n[-c, --config] - point to a specific yaml config file",
+                  "\n[-e, --entire] - convert an entire folder",
+                  "\n[-s, --source] - provide the source album folder",
+                  "\n[-d, --destination] - provide the destination folder",
+                  "\n[-l, --latest] - convert the most recently modified",
+                  "folder",
+                  "\n[--skip-cover-art] - skip copying the cover art",
+                  "\n[--skip-dir-prompts] - use ARTIST and ALBUM tags for",
+                  "directory names without asking",
+                  "\n[--compilation] - mark the album as compilation and skip",
+                  "the question",
+                  "\n[--not-compilation] - mark the album as not",
+                  "a compilation and skip the question",
+                  "\nDocs: https://github.com/PokerFacowaty/flac2lib\n")
+            return
+        elif opt in ["-c", "--config"]:
+            config_file = arg
+        elif opt in ["-e", "--entire"]:
+            entire = True
+        elif opt in ["-s", "--source"]:
+            flac_album_path = Path(arg)
+        elif opt in ["-d", "--destination"]:
+            dst_album_path = Path(arg)
+        elif opt in ["-l", "--latest"]:
+            latest = True
+        elif opt in ["--skip-cover-art"]:
+            cover_art = False
+        elif opt in ["--skip-dir-prompts"]:
+            dir_prompts = False
+        elif opt in ["--compilation"]:
+            is_compilation = True
+        elif opt in ["--not-compilation"]:
+            is_compilation = False
+
+    config = yaml.safe_load(open(config_file))
+    flac_albums_dir = Path(config["flac_albums_dir"])
+    dst_albums_dir = Path(config["dst_albums_dir"])
+    if entire is None:
+        entire = config["entire"]
+    num_albums_to_show = config["num_albums_to_show"]
+    if dir_prompts is None:
+        dir_prompts = config["dir_name_prompts"]
+    if latest is None:
+        latest = config["latest"]
+    if cover_art is None:
+        cover_art = config["get_cover_art"]
+    default_cover_art_name = config["default_cover_art_name"]
+    cover_art_suffixes = config["cover_art_suffixes"]
+    dst_format = config["destination_format"]
+    ffmpeg_params = config["ffmpeg_params"]
+
+    print("\n----- flac2lib.py by PokerFacowaty -----")
+    print("https://github.com/PokerFacowaty/flac2lib")
+
+    if flac_album_path is None:
+        flac_album_path = get_flac_album_path(flac_albums_dir,
+                                              num_albums_to_show, latest)
+
+    if is_compilation is None:
+        is_compilation = ask_if_compilation()
+
+    song_picks_paths = pick_songs(flac_album_path, entire)
+
+    if dst_album_path is None:
+        artist_name, album_name, dst_album_path = get_dst_album_path(
+                                                    song_picks_paths,
+                                                    dst_albums_dir,
+                                                    dir_prompts)
+
+    if cover_art:
+        get_cover_art(flac_album_path, artist_name, album_name,
+                      dst_album_path, default_cover_art_name,
+                      cover_art_suffixes)
+
+    convert_songs(dst_album_path, song_picks_paths, flac_album_path,
+                  ffmpeg_params, dst_format, is_compilation)
+
+
 def get_flac_album_path(flac_albums_dir, num_albums_to_show, latest):
     '''Fetches folders inside flac_albums_dir containing flac files (note that
        with multi-CD albums, each CD is treated as a separate album since that
@@ -285,105 +384,6 @@ def convert_songs(dst_album_path, song_picks_paths, flac_album_path,
             print(f"\n{dst_song_path.stem} already exists, skipping...")
     print("\nAll conversions done.")
     return
-
-
-def main():
-    opts, args = getopt.getopt(sys.argv[1:], "hes:n:d:c:l",
-                               ["help", "entire", "source=", "number=",
-                                "destination=", "config=", "latest",
-                                "skip-cover-art", "skip-dir-prompts",
-                                "compilation", "not-compilation"])
-
-    config_file = 'config.yaml'
-    flac_album_path = None
-    dst_album_path = None
-    entire = None
-    latest = None
-    cover_art = None
-    dir_prompts = None
-    is_compilation = None
-
-    for opt, arg in opts:
-        if opt in ["-h", "--help"]:
-            print("\n----- flac2lib by PokerFacowaty -----",
-                  "\nPossible options:",
-                  "\n[-h, --help] - open this prompt",
-                  "\n[-c, --config] - point to a specific yaml config file",
-                  "\n[-e, --entire] - convert an entire folder",
-                  "\n[-s, --source] - provide the source album folder",
-                  "\n[-d, --destination] - provide the destination folder",
-                  "\n[-l, --latest] - convert the most recently modified",
-                  "folder",
-                  "\n[--skip-cover-art] - skip copying the cover art",
-                  "\n[--skip-dir-prompts] - use ARTIST and ALBUM tags for",
-                  "directory names without asking",
-                  "\n[--compilation] - mark the album as compilation and skip",
-                  "the question",
-                  "\n[--not-compilation] - mark the album as not",
-                  "a compilation and skip the question",
-                  "\nDocs: https://github.com/PokerFacowaty/flac2lib\n")
-            return
-        elif opt in ["-c", "--config"]:
-            config_file = arg
-        elif opt in ["-e", "--entire"]:
-            entire = True
-        elif opt in ["-s", "--source"]:
-            flac_album_path = Path(arg)
-        elif opt in ["-d", "--destination"]:
-            dst_album_path = Path(arg)
-        elif opt in ["-l", "--latest"]:
-            latest = True
-        elif opt in ["--skip-cover-art"]:
-            cover_art = False
-        elif opt in ["--skip-dir-prompts"]:
-            dir_prompts = False
-        elif opt in ["--compilation"]:
-            is_compilation = True
-        elif opt in ["--not-compilation"]:
-            is_compilation = False
-
-    config = yaml.safe_load(open(config_file))
-    flac_albums_dir = Path(config["flac_albums_dir"])
-    dst_albums_dir = Path(config["dst_albums_dir"])
-    if entire is None:
-        entire = config["entire"]
-    num_albums_to_show = config["num_albums_to_show"]
-    if dir_prompts is None:
-        dir_prompts = config["dir_name_prompts"]
-    if latest is None:
-        latest = config["latest"]
-    if cover_art is None:
-        cover_art = config["get_cover_art"]
-    default_cover_art_name = config["default_cover_art_name"]
-    cover_art_suffixes = config["cover_art_suffixes"]
-    dst_format = config["destination_format"]
-    ffmpeg_params = config["ffmpeg_params"]
-
-    print("\n----- flac2lib.py by PokerFacowaty -----")
-    print("https://github.com/PokerFacowaty/flac2lib")
-
-    if flac_album_path is None:
-        flac_album_path = get_flac_album_path(flac_albums_dir,
-                                              num_albums_to_show, latest)
-
-    if is_compilation is None:
-        is_compilation = ask_if_compilation()
-
-    song_picks_paths = pick_songs(flac_album_path, entire)
-
-    if dst_album_path is None:
-        artist_name, album_name, dst_album_path = get_dst_album_path(
-                                                    song_picks_paths,
-                                                    dst_albums_dir,
-                                                    dir_prompts)
-
-    if cover_art:
-        get_cover_art(flac_album_path, artist_name, album_name,
-                      dst_album_path, default_cover_art_name,
-                      cover_art_suffixes)
-
-    convert_songs(dst_album_path, song_picks_paths, flac_album_path,
-                  ffmpeg_params, dst_format, is_compilation)
 
 
 if __name__ == "__main__":
