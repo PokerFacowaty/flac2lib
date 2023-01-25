@@ -1,14 +1,28 @@
-from pydub import AudioSegment
-from pydub.utils import mediainfo
-from pathlib import Path
-from urllib.parse import urlencode
-from urllib.request import urlopen
-import getopt
-import sys
-import yaml
+import argparse
 import cv2
 import shutil
+import sys
+import yaml
 import webbrowser
+from pathlib import Path
+from pydub import AudioSegment
+from pydub.utils import mediainfo
+from urllib.parse import urlencode
+from urllib.request import urlopen
+
+# DONE: sorted imports
+# DONE: argparse
+# TODO: ? config parsing as a function separate from main?
+# TODO: process_album uses a fuckton of variables, some of them from
+# AlbumToProcess, maybe it can be used?
+# TODO: variable names to simplify / shorten
+# TODO: whiles for inputs, so only particular inputs are accepted and nothing
+# happens for others - either implement everywhere or change
+# TODO: consistent prints
+# TODO: if entire first makes more sense in 214
+# TODO: lowercase "tag" in get_dst_album_path?
+# TODO: 255 & 275 looks cluttered, might need a comment at the very least
+# TODO: 295 and more - only spaces should still be considered as blank
 
 
 class AlbumToProcess:
@@ -29,72 +43,77 @@ def main():
     '''Parses the config file and initiates a loop of calling process_album()
        until the user decides they're done with choosing albums, then proceeds
        to convert all the albums in the queue.'''
-    opts, args = getopt.getopt(sys.argv[1:], "hes:n:d:c:l",
-                               ["help", "entire", "source=", "number=",
-                                "destination=", "config=", "latest",
-                                "skip-cover-art", "skip-dir-prompts",
-                                "compilation", "not-compilation"])
 
-    config_file = 'config.yaml'
-    flac_album_path = None
-    dst_album_path = None
-    entire = None
-    latest = None
-    cover_art = None
-    dir_prompts = None
-    is_compilation = None
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-c", "--config", default=None,
+                        help="point to a specific yaml config file")
+    parser.add_argument("-s", "--source", default=None,
+                        help="provide the source album folder", type=str)
+    parser.add_argument("-d", "--destination", default=None,
+                        help="provide the destination folder", type=str)
+    parser.add_argument("-e", "--entire", action="store_true", default=None,
+                        help="convert an entire folder")
+    parser.add_argument("-l", "--latest", action="store_true", default=None,
+                        help="convert the most recently modified folder")
+    parser.add_argument("--skip-cover-art", action="store_true", default=None,
+                        help="skip copying the cover art")
+    parser.add_argument("--skip-dir-prompts", action="store_true", default=None,
+                        help="use ARTIST and ALBUM tags for directory names"
+                        + "without asking")
+    parser.add_argument("--compilation", action="store_true",
+                        help="mark the album(s) as compilation(s) and skip the"
+                        + "prompt")
+    parser.add_argument("--not-compilation", action="store_true",
+                        help="mark the album(s) as not compilation(s) and skip"
+                        + "the prompt")
+    args = parser.parse_args()
 
-    for opt, arg in opts:
-        if opt in ["-h", "--help"]:
-            print("\n----- flac2lib by PokerFacowaty -----",
-                  "\nPossible options:",
-                  "\n[-h, --help] - open this prompt",
-                  "\n[-c, --config] - point to a specific yaml config file",
-                  "\n[-e, --entire] - convert an entire folder",
-                  "\n[-s, --source] - provide the source album folder",
-                  "\n[-d, --destination] - provide the destination folder",
-                  "\n[-l, --latest] - convert the most recently modified",
-                  "folder",
-                  "\n[--skip-cover-art] - skip copying the cover art",
-                  "\n[--skip-dir-prompts] - use ARTIST and ALBUM tags for",
-                  "directory names without asking",
-                  "\n[--compilation] - mark the album as compilation and skip",
-                  "the question",
-                  "\n[--not-compilation] - mark the album as not",
-                  "a compilation and skip the question",
-                  "\nDocs: https://github.com/PokerFacowaty/flac2lib\n")
-            return
-        elif opt in ["-c", "--config"]:
-            config_file = arg
-        elif opt in ["-e", "--entire"]:
-            entire = True
-        elif opt in ["-s", "--source"]:
-            flac_album_path = Path(arg)
-        elif opt in ["-d", "--destination"]:
-            dst_album_path = Path(arg)
-        elif opt in ["-l", "--latest"]:
-            latest = True
-        elif opt in ["--skip-cover-art"]:
-            cover_art = False
-        elif opt in ["--skip-dir-prompts"]:
-            dir_prompts = False
-        elif opt in ["--compilation"]:
-            is_compilation = True
-        elif opt in ["--not-compilation"]:
-            is_compilation = False
-
+    if args.config is None:
+        config_file = 'config.yaml'
+    else:
+        config_file = args.config
     config = yaml.safe_load(open(config_file))
+
+    if args.source is None:
+        flac_album_path = None
+    else:
+        flac_album_path = args.source
+
+    if args.destination is None:
+        dst_album_path = None
+    else:
+        dst_album_path = args.destination
+
+    if args.entire is None:
+        entire = config["entire"]
+    else:
+        entire = args.entire
+
+    if args.latest is None:
+        latest = config["latest"]
+    else:
+        latest = args.latest
+
+    if args.skip_cover_art is None:
+        cover_art = config["get_cover_art"]
+    elif args.skip_cover_art:
+        cover_art = False
+
+    if args.skip_dir_prompts is None:
+        dir_prompts = config["dir_name_prompts"]
+    elif args.skip_dir_prompts:
+        dir_prompts = False
+
+    if args.compilation is None and args.not_compilation is None:
+        is_compilation = None
+    elif args.compilation:
+        is_compilation = True
+    else:
+        is_compilation = False
+
     flac_albums_dir = Path(config["flac_albums_dir"])
     dst_albums_dir = Path(config["dst_albums_dir"])
-    if entire is None:
-        entire = config["entire"]
     num_albums_to_show = config["num_albums_to_show"]
-    if dir_prompts is None:
-        dir_prompts = config["dir_name_prompts"]
-    if latest is None:
-        latest = config["latest"]
-    if cover_art is None:
-        cover_art = config["get_cover_art"]
     default_cover_art_name = config["default_cover_art_name"]
     cover_art_suffixes = config["cover_art_suffixes"]
     dst_format = config["destination_format"]
