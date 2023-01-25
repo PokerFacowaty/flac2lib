@@ -62,9 +62,9 @@ def main():
                         help="convert the most recently modified folder")
     parser.add_argument("--skip-cover-art", action="store_true", default=None,
                         help="skip copying the cover art")
-    parser.add_argument("--skip-dir-prompts", action="store_true", default=None,
+    parser.add_argument("--skip-dir-prompts", action="store_true",
                         help="use ARTIST and ALBUM tags for directory names"
-                        + "without asking")
+                        + "without asking", default=None)
     parser.add_argument("--compilation", action="store_true",
                         help="mark the album(s) as compilation(s) and skip the"
                         + "prompt")
@@ -338,7 +338,8 @@ def get_cover_art(cfg):
 
     all_images_paths = []
     for suffix in cfg["cover_art_suffixes"]:
-        all_images_paths.extend(list(cfg["flac_album_path"].rglob(f"*.{suffix}")))
+        all_images_paths.extend(list(cfg["flac_album_path"].rglob(
+                                     f"*.{suffix}")))
 
     print("\n\n--- Cover Art ---\n")
     if all_images_paths:
