@@ -22,7 +22,7 @@ from urllib.request import urlopen
 # TODO: whiles for inputs, so only particular inputs are accepted and nothing
 # happens for others - either implement everywhere or change
 # TODO: consistent prints
-# TODO: if entire first makes more sense in 214
+# DONE: if entire first makes more sense in 214
 # TODO: lowercase "tag" in get_dst_album_path?
 # TODO: 255 & 275 looks cluttered, might need a comment at the very least
 # TODO: 295 and more - only spaces should still be considered as blank
@@ -236,7 +236,9 @@ def pick_songs(flac_album_path, entire):
 
     all_flac_files_paths = list(flac_album_path.rglob("*.flac"))
 
-    if not entire:
+    if entire:
+        song_picks = list(range(len(all_flac_files_paths)))
+    else:
         print("\n\n--- Songs ---\n")
         for nr, f in enumerate(sorted([x.name for x in all_flac_files_paths])):
             print(nr, ": ", f)
@@ -244,8 +246,6 @@ def pick_songs(flac_album_path, entire):
 
         answer = input("Choose songs, comma separated\n:")
         song_picks = [int(x) for x in str(answer).split(',')]
-    elif entire:
-        song_picks = list(range(len(all_flac_files_paths)))
     return [all_flac_files_paths[x] for x in song_picks]
 
 
