@@ -16,7 +16,7 @@ from urllib.request import urlopen
 # DONE: process_album uses a fuckton of variables, some of them from
 # AlbumToProcess, maybe it can be used?
 # AlbumToProccess is created in that function, so no, but solved with cfg
-# TODO: skipping question about more albums when there was source path
+# DONE: skipping question about more albums when there was source / dst path
 # specified in an argument (since you're only converting one then)
 # TODO: variable names to simplify / shorten
 # TODO: whiles for inputs, so only particular inputs are accepted and nothing
@@ -147,10 +147,13 @@ def process_album(cfg):
     '''Gets all the info that is needed about the album and stores it in an
        AlbumToProcess object inside the queue list.'''
 
+    single_album = False
     if cfg["flac_album_path"] is None:
         cfg["flac_album_path"] = get_flac_album_path(cfg["flac_albums_dir"],
                                                      cfg["num_albums_to_show"],
                                                      cfg["latest"])
+    else:
+        single_album = True
 
     if cfg["is_compilation"] is None:
         cfg["is_compilation"] = ask_if_compilation()
@@ -163,6 +166,8 @@ def process_album(cfg):
          cfg["dst_album_path"]) = get_dst_album_path(cfg["song_picks_paths"],
                                                      cfg["dst_albums_dir"],
                                                      cfg["dir_prompts"])
+    else:
+        single_album = True
 
     if cfg["cover_art"]:
         get_cover_art(cfg)
@@ -170,6 +175,9 @@ def process_album(cfg):
     queue.append(AlbumToProcess(cfg["dst_album_path"], cfg["song_picks_paths"],
                                 cfg["flac_album_path"], cfg["ffmpeg_params"],
                                 cfg["dst_format"], cfg["is_compilation"]))
+
+    if single_album:
+        return False
 
     answer = input("\nWould you like to add process more albums? [y/n]\n")
     if answer.lower() == "y":
