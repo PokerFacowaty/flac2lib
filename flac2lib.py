@@ -12,9 +12,11 @@ from urllib.request import urlopen
 
 # DONE: sorted imports
 # DONE: argparse
-# TODO: ? config parsing as a function separate from main?
+# DONE: ? config parsing as a function separate from main?
 # TODO: process_album uses a fuckton of variables, some of them from
 # AlbumToProcess, maybe it can be used?
+# TODO: skipping question about more albums when there was source path
+# specified in an argument (since you're only converting one then)
 # TODO: variable names to simplify / shorten
 # TODO: whiles for inputs, so only particular inputs are accepted and nothing
 # happens for others - either implement everywhere or change
@@ -23,6 +25,8 @@ from urllib.request import urlopen
 # TODO: lowercase "tag" in get_dst_album_path?
 # TODO: 255 & 275 looks cluttered, might need a comment at the very least
 # TODO: 295 and more - only spaces should still be considered as blank
+# TODO: get_dst_album_path also returns artist and album name which is
+# misleading
 
 
 class AlbumToProcess:
@@ -68,101 +72,103 @@ def main():
                         + "the prompt")
     args = parser.parse_args()
 
-    if args.config is None:
-        config_file = 'config.yaml'
-    else:
-        config_file = args.config
-    config = yaml.safe_load(open(config_file))
-
-    if args.source is None:
-        flac_album_path = None
-    else:
-        flac_album_path = args.source
-
-    if args.destination is None:
-        dst_album_path = None
-    else:
-        dst_album_path = args.destination
-
-    if args.entire is None:
-        entire = config["entire"]
-    else:
-        entire = args.entire
-
-    if args.latest is None:
-        latest = config["latest"]
-    else:
-        latest = args.latest
-
-    if args.skip_cover_art is None:
-        cover_art = config["get_cover_art"]
-    elif args.skip_cover_art:
-        cover_art = False
-
-    if args.skip_dir_prompts is None:
-        dir_prompts = config["dir_name_prompts"]
-    elif args.skip_dir_prompts:
-        dir_prompts = False
-
-    if args.compilation is None and args.not_compilation is None:
-        is_compilation = None
-    elif args.compilation:
-        is_compilation = True
-    else:
-        is_compilation = False
-
-    flac_albums_dir = Path(config["flac_albums_dir"])
-    dst_albums_dir = Path(config["dst_albums_dir"])
-    num_albums_to_show = config["num_albums_to_show"]
-    default_cover_art_name = config["default_cover_art_name"]
-    cover_art_suffixes = config["cover_art_suffixes"]
-    dst_format = config["destination_format"]
-    ffmpeg_params = config["ffmpeg_params"]
+    cfg = parse_args_and_config(args)
 
     print("\n----- flac2lib.py by PokerFacowaty -----")
     print("https://github.com/PokerFacowaty/flac2lib")
 
-    while process_album(flac_album_path, flac_albums_dir, num_albums_to_show,
-                        latest, is_compilation, entire, dst_albums_dir,
-                        dir_prompts, cover_art, dst_album_path,
-                        default_cover_art_name, cover_art_suffixes,
-                        ffmpeg_params, dst_format):
+    while process_album(cfg):
         continue
 
     for album in queue:
         convert_songs(album)
 
 
-def process_album(flac_album_path, flac_albums_dir, num_albums_to_show, latest,
-                  is_compilation, entire, dst_albums_dir, dir_prompts,
-                  cover_art, dst_album_path, default_cover_art_name,
-                  cover_art_suffixes, ffmpeg_params, dst_format):
+def parse_args_and_config(args):
+
+    cfg = dict()
+
+    if args.config is None:
+        config_file = 'config.yaml'
+    else:
+        config_file = args.config
+    yaml_config = yaml.safe_load(open(config_file))
+
+    if args.source is None:
+        cfg["flac_album_path"] = None
+    else:
+        cfg["flac_album_path"] = args.source
+
+    if args.destination is None:
+        cfg["dst_album_path"] = None
+    else:
+        cfg["dst_album_path"] = args.destination
+
+    if args.entire is None:
+        cfg["entire"] = yaml_config["entire"]
+    else:
+        cfg["entire"] = args.entire
+
+    if args.latest is None:
+        cfg["latest"] = yaml_config["latest"]
+    else:
+        cfg["latest"] = args.latest
+
+    if args.skip_cover_art is None:
+        cfg["cover_art"] = yaml_config["get_cover_art"]
+    elif args.skip_cover_art:
+        cfg["cover_art"] = False
+
+    if args.skip_dir_prompts is None:
+        cfg["dir_prompts"] = yaml_config["dir_name_prompts"]
+    elif args.skip_dir_prompts:
+        cfg["dir_prompts"] = False
+
+    if args.compilation is None and args.not_compilation is None:
+        cfg["is_compilation"] = None
+    elif args.compilation:
+        cfg["is_compilation"] = True
+    else:
+        cfg["is_compilation"] = False
+
+    cfg["flac_albums_dir"] = Path(yaml_config["flac_albums_dir"])
+    cfg["dst_albums_dir"] = Path(yaml_config["dst_albums_dir"])
+    cfg["num_albums_to_show"] = yaml_config["num_albums_to_show"]
+    cfg["default_cover_art_name"] = yaml_config["default_cover_art_name"]
+    cfg["cover_art_suffixes"] = yaml_config["cover_art_suffixes"]
+    cfg["dst_format"] = yaml_config["destination_format"]
+    cfg["ffmpeg_params"] = yaml_config["ffmpeg_params"]
+
+    return cfg
+
+
+def process_album(cfg):
     '''Gets all the info that is needed about the album and stores it in an
        AlbumToProcess object inside the queue list.'''
 
-    if flac_album_path is None:
-        flac_album_path = get_flac_album_path(flac_albums_dir,
-                                              num_albums_to_show, latest)
+    if cfg["flac_album_path"] is None:
+        cfg["flac_album_path"] = get_flac_album_path(cfg["flac_albums_dir"],
+                                                     cfg["num_albums_to_show"],
+                                                     cfg["latest"])
 
-    if is_compilation is None:
-        is_compilation = ask_if_compilation()
+    if cfg["is_compilation"] is None:
+        cfg["is_compilation"] = ask_if_compilation()
 
-    song_picks_paths = pick_songs(flac_album_path, entire)
+    cfg["song_picks_paths"] = pick_songs(cfg["flac_album_path"], cfg["entire"])
 
-    if dst_album_path is None:
-        artist_name, album_name, dst_album_path = get_dst_album_path(
-                                                    song_picks_paths,
-                                                    dst_albums_dir,
-                                                    dir_prompts)
+    if cfg["dst_album_path"] is None:
+        (cfg["artist_name"],
+         cfg["album_name"],
+         cfg["dst_album_path"]) = get_dst_album_path(cfg["song_picks_paths"],
+                                                     cfg["dst_albums_dir"],
+                                                     cfg["dir_prompts"])
 
-    if cover_art:
-        get_cover_art(flac_album_path, artist_name, album_name,
-                      dst_album_path, default_cover_art_name,
-                      cover_art_suffixes)
+    if cfg["cover_art"]:
+        get_cover_art(cfg)
 
-    queue.append(AlbumToProcess(dst_album_path, song_picks_paths,
-                                flac_album_path, ffmpeg_params, dst_format,
-                                is_compilation))
+    queue.append(AlbumToProcess(cfg["dst_album_path"], cfg["song_picks_paths"],
+                                cfg["flac_album_path"], cfg["ffmpeg_params"],
+                                cfg["dst_format"], cfg["is_compilation"]))
 
     answer = input("\nWould you like to add process more albums? [y/n]\n")
     if answer.lower() == "y":
@@ -313,8 +319,7 @@ def get_dst_album_path(song_picks_paths, dst_albums_dir, dir_prompts):
     return artist_name, album_name, dst_album_path
 
 
-def get_cover_art(flac_album_path, artist_name, album_name, dst_album_path,
-                  default_cover_art_name, cover_art_suffixes):
+def get_cover_art(cfg):
     '''Fetches all images with proper suffixes found in the flac_album_path.
        Offers options to choose a main cover art file (copied directly into the
        destination folder), copy additional cover art preserving the folder
@@ -323,13 +328,13 @@ def get_cover_art(flac_album_path, artist_name, album_name, dst_album_path,
        before copying.'''
 
     all_images_paths = []
-    for suffix in cover_art_suffixes:
-        all_images_paths.extend(list(flac_album_path.rglob(f"*.{suffix}")))
+    for suffix in cfg["cover_art_suffixes"]:
+        all_images_paths.extend(list(cfg["flac_album_path"].rglob(f"*.{suffix}")))
 
     print("\n\n--- Cover Art ---\n")
     if all_images_paths:
         for nr, (fpath, fname) in enumerate([(x, x.relative_to(
-                                                    flac_album_path))
+                                                    cfg["flac_album_path"]))
                                              for x in all_images_paths]):
             img = cv2.imread(str(fpath))
             h, w, _ = img.shape
@@ -339,14 +344,15 @@ def get_cover_art(flac_album_path, artist_name, album_name, dst_album_path,
               "covers.musichoarders.xyz?\n[y] / [n]")
         answer = input(":")
         if answer.lower() == "y":
-            download_cover_art(artist_name, album_name, dst_album_path,
-                               default_cover_art_name)
+            download_cover_art(cfg["artist_name"], cfg["album_name"],
+                               cfg["dst_album_path"],
+                               cfg["default_cover_art_name"])
             return
         elif answer.lower() == "n":
             return
 
     help_ = ("\n<number> - pick cover art to be copied to the"
-             + f"destination folder as \"{default_cover_art_name}\"."
+             + f"destination folder as \"{cfg['default_cover_art_name']}\"."
              + "\np<number> - preview the image \nc<number> - copy "
              + "an additional file directly without changing "
              + "its name\nd - download main cover art from "
@@ -366,8 +372,8 @@ def get_cover_art(flac_album_path, artist_name, album_name, dst_album_path,
                 cv2.waitKey(100)
         elif answer[0] == "c":
             misc_src = all_images_paths[int(answer[1:])]
-            misc_dest = (dst_album_path
-                         / misc_src.relative_to(flac_album_path))
+            misc_dest = (cfg["dst_album_path"]
+                         / misc_src.relative_to(cfg["flac_album_path"]))
 
             if not misc_dest.exists():
                 misc_dest.parent.mkdir(parents=True, exist_ok=True)
@@ -377,12 +383,12 @@ def get_cover_art(flac_album_path, artist_name, album_name, dst_album_path,
                 print("Misc cover art already copied, skipping...")
         elif answer.isnumeric():
             main_src = all_images_paths[int(answer)]
-            main_dest = (dst_album_path
-                         / (default_cover_art_name
+            main_dest = (cfg["dst_album_path"]
+                         / (cfg["default_cover_art_name"]
                             + all_images_paths[int(answer)].suffix))
 
             if not main_dest.exists():
-                dst_album_path.mkdir(parents=True, exist_ok=True)
+                cfg["dst_album_path"].mkdir(parents=True, exist_ok=True)
                 shutil.copy2(main_src, main_dest)
                 print("Main cover art succesfully copied as "
                       + f"{main_dest.stem}")
@@ -394,8 +400,9 @@ def get_cover_art(flac_album_path, artist_name, album_name, dst_album_path,
                 print(nr, ": ", f)
             print(help_)
         elif answer[0] == "d":
-            download_cover_art(artist_name, album_name, dst_album_path,
-                               default_cover_art_name)
+            download_cover_art(cfg["artist_name"], cfg["album_name"],
+                               cfg["dst_album_path"],
+                               cfg["default_cover_art_name"])
             print(help_)
             # printing it once again since we're still at choosing the ca
             # and the user might not realise that with just a ":" at the
