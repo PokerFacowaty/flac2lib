@@ -13,8 +13,9 @@ from urllib.request import urlopen
 # DONE: sorted imports
 # DONE: argparse
 # DONE: ? config parsing as a function separate from main?
-# TODO: process_album uses a fuckton of variables, some of them from
+# DONE: process_album uses a fuckton of variables, some of them from
 # AlbumToProcess, maybe it can be used?
+# AlbumToProccess is created in that function, so no, but solved with cfg
 # TODO: skipping question about more albums when there was source path
 # specified in an argument (since you're only converting one then)
 # TODO: variable names to simplify / shorten
