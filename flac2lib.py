@@ -21,7 +21,7 @@ from urllib.request import urlopen
 # TODO: variable names to simplify / shorten
 # TODO: whiles for inputs, so only particular inputs are accepted and nothing
 # happens for others - either implement everywhere or change
-# TODO: consistent prints
+# DONE: consistent prints
 # DONE: if entire first makes more sense in 214
 # TODO: lowercase "tag" in get_dst_album_path?
 # TODO: 255 & 275 looks cluttered, might need a comment at the very least
@@ -280,7 +280,7 @@ def get_dst_album_path(song_picks_paths, dst_albums_dir, dir_prompts):
         print("\n\n--- Destination folder name ---\n")
         if artist_name:
             print(f"Proposed artist folder name: " + f"{artist_name}")
-            print("Type \"y\" to confirm or enter the desired artist name "
+            print("Type [y] to confirm or enter the desired artist name "
                   + "instead")
         else:
             print("No artist name found. Please enter the desired name.")
@@ -299,7 +299,7 @@ def get_dst_album_path(song_picks_paths, dst_albums_dir, dir_prompts):
     if dir_prompts:
         if album_name:
             print(f"\nProposed album folder name: " + f"{album_name}")
-            print("Type \"y\" to confirm or enter the desired album name "
+            print("Type [y] to confirm or enter the desired album name "
                   + "instead")
         else:
             print("No album name found. Please enter the desired name.")
@@ -388,9 +388,10 @@ def get_cover_art(cfg):
             if not misc_dest.exists():
                 misc_dest.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(misc_src, misc_dest)
-                print("Misc cover art succesfully copied as " + f"{misc_dest}")
+                print("Misc cover art succesfully copied as "
+                      + f"{misc_dest}\n")
             else:
-                print("Misc cover art already copied, skipping...")
+                print("Misc cover art already copied, skipping...\n")
         elif answer.isnumeric():
             main_src = all_images_paths[int(answer)]
             main_dest = (cfg["dst_album_path"]
@@ -401,9 +402,9 @@ def get_cover_art(cfg):
                 cfg["dst_album_path"].mkdir(parents=True, exist_ok=True)
                 shutil.copy2(main_src, main_dest)
                 print("Main cover art succesfully copied as "
-                      + f"{main_dest.stem}")
+                      + f"{main_dest.stem}\n")
             else:
-                print("Main cover art already copied, skipping...")
+                print("Main cover art already copied, skipping...\n")
         elif answer[0] == "h":
             print()
             for nr, f in enumerate([x.name for x in all_images_paths]):
@@ -430,7 +431,7 @@ def download_cover_art(artist_name, album_name, dst_album_path,
        cover art filename.'''
     print("\n\n--- Searching and downloading cover art ---\n")
     print(f"Proposed artist name: " + f"{artist_name}")
-    print("Type \"y\" to confirm or enter the desired artist name instead,",
+    print("Type [y] to confirm or enter the desired artist name instead,",
           "leave blank to not search for a specific artist")
     artist_name_answer = input(':')
     if artist_name_answer.lower() == "y":
