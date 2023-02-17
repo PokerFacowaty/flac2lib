@@ -19,8 +19,10 @@ from urllib.request import urlopen
 # DONE: skipping question about more albums when there was source / dst path
 # specified in an argument (since you're only converting one then)
 # TODO: variable names to simplify / shorten
-# TODO: whiles for inputs, so only particular inputs are accepted and nothing
-# happens for others - either implement everywhere or change
+# DONE: whiles for inputs, so only particular inputs are accepted and nothing
+# happens for others - either implement everywhere or change;
+# implementing everywhere + validation
+# DONE: test if all of them are breaking properly
 # DONE: consistent prints
 # DONE: if entire first makes more sense in 214
 # TODO: lowercase "tag" in get_dst_album_path?
@@ -179,11 +181,12 @@ def process_album(cfg):
     if single_album:
         return False
 
-    answer = input("\nWould you like to add process more albums? [y/n]\n")
-    if answer.lower() == "y":
-        return True
-    else:
-        return False
+    while True:
+        answer = input("\nWould you like to add more albums? [y/n]\n")
+        if answer.lower() == "y":
+            return True
+        elif answer.lower() == "n":
+            return False
 
 
 def get_flac_album_path(flac_albums_dir, num_albums_to_show, latest):
@@ -213,8 +216,10 @@ def get_flac_album_path(flac_albums_dir, num_albums_to_show, latest):
     for i in range(min(len(folder_paths_to_show), num_albums_to_show)):
         print(f"{i}: ", str(rel_folder_paths_to_show[i]))
 
-    answer = input("\nChoose the album\n:")
-    return folder_paths_to_show[int(answer)]
+    while True:
+        answer = input("\nChoose the album\n:")
+        if answer.isnumeric():
+            return folder_paths_to_show[int(answer)]
 
 
 def ask_if_compilation():
@@ -244,7 +249,18 @@ def pick_songs(flac_album_path, entire):
             print(nr, ": ", f)
         print()
 
-        answer = input("Choose songs, comma separated\n:")
+        while True:
+            answer = input("Choose songs, comma separated\n:")
+            valid = True
+            for num in answer.split(","):
+                if not num.isnumeric():
+                    print("Invalid input\n")
+                    valid = False
+                    break
+            if valid:
+                break
+            else:
+                continue
         song_picks = [int(x) for x in str(answer).split(',')]
     return [all_flac_files_paths[x] for x in song_picks]
 
@@ -284,16 +300,22 @@ def get_dst_album_path(song_picks_paths, dst_albums_dir, dir_prompts):
                   + "instead")
         else:
             print("No artist name found. Please enter the desired name.")
-        artist_name_answer = input(":")
-        if artist_name and artist_name_answer.lower() == "y":
-            dst_album_path = dst_albums_dir / f"{artist_name}"
-        else:
-            dst_album_path = dst_albums_dir / artist_name_answer
+        while True:
+            artist_name_answer = input(":")
+            if artist_name and artist_name_answer.lower() == "y":
+                dst_album_path = dst_albums_dir / f"{artist_name}"
+                break
+            elif artist_name_answer:
+                dst_album_path = dst_albums_dir / artist_name_answer
+                break
     elif not dir_prompts and artist_name:
         dst_album_path = dst_albums_dir / f"{artist_name}"
     elif not dir_prompts and not artist_name:
-        print("No artist name found. Please enter the desired name.")
-        artist_name_answer = input(":")
+        while True:
+            print("No artist name found. Please enter the desired name.")
+            artist_name_answer = input(":")
+            if artist_name_answer:
+                break
         dst_album_path = dst_albums_dir / f"{artist_name_answer}"
 
     if dir_prompts:
@@ -303,16 +325,22 @@ def get_dst_album_path(song_picks_paths, dst_albums_dir, dir_prompts):
                   + "instead")
         else:
             print("No album name found. Please enter the desired name.")
-        album_name_answer = input(":")
-        if album_name and album_name_answer.lower() == "y":
-            dst_album_path = dst_album_path / f"{album_name}"
-        else:
-            dst_album_path = dst_album_path / album_name_answer
+        while True:
+            album_name_answer = input(":")
+            if album_name and album_name_answer.lower() == "y":
+                dst_album_path = dst_album_path / f"{album_name}"
+                break
+            elif album_name_answer:
+                dst_album_path = dst_album_path / album_name_answer
+                break
     elif not dir_prompts and album_name:
         dst_album_path = dst_album_path / f"{album_name}"
     elif not dir_prompts and not artist_name:
-        print("No album name found. Please enter the desired name.")
-        album_name_answer = input(":")
+        while True:
+            print("No album name found. Please enter the desired name.")
+            album_name_answer = input(":")
+            if album_name_answer:
+                break
         dst_album_path = dst_albums_dir / f"{album_name_answer}"
 
     if dir_prompts:
@@ -352,16 +380,17 @@ def get_cover_art(cfg):
     else:
         print("No cover art found. Would you like to download cover art from",
               "covers.musichoarders.xyz?\n[y] / [n]")
-        answer = input(":")
-        if answer.lower() == "y":
-            download_cover_art(cfg["artist_name"], cfg["album_name"],
-                               cfg["dst_album_path"],
-                               cfg["default_cover_art_name"])
-            return
-        elif answer.lower() == "n":
-            return
+        while True:
+            answer = input(":")
+            if answer.lower() == "y":
+                download_cover_art(cfg["artist_name"], cfg["album_name"],
+                                   cfg["dst_album_path"],
+                                   cfg["default_cover_art_name"])
+                return
+            elif answer.lower() == "n":
+                return
 
-    help_ = ("\n<number> - pick cover art to be copied to the"
+    help_ = ("\n<number> - pick cover art to be copied to the "
              + f"destination folder as \"{cfg['default_cover_art_name']}\"."
              + "\np<number> - preview the image \nc<number> - copy "
              + "an additional file directly without changing "
@@ -452,7 +481,10 @@ def download_cover_art(artist_name, album_name, dst_album_path,
     webbrowser.open(url)
 
     print("\nChoose a cover art, click on it, then paste its link here")
-    cover_art_link = input(':')
+    while True:
+        cover_art_link = input(':')
+        if cover_art_link:
+            break
     dst_album_path.mkdir(parents=True, exist_ok=True)
     covert_art_file = (dst_album_path / (default_cover_art_name
                        + cover_art_link[cover_art_link.rfind("."):]))
