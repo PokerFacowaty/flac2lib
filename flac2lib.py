@@ -28,9 +28,12 @@ from urllib.request import urlopen
 # DONE: lowercase "tag" in get_dst_album_path?
 # along with a new sytem for tags with looping over all possibilities
 # DONE: 295 and more - only spaces should still be considered as blank
-# TODO: get_dst_album_path also returns artist and album name which is
+# DONE: get_dst_album_path also returns artist and album name which is
 # misleading
-# TODO: proper comments / docstrings
+# Added a proper docstring since it's easier than refactoring.
+# DONE: proper comments / docstrings
+# TODO: type hints
+# TODO: input validations from inpit-validation-notes
 
 
 class AlbumToProcess:
@@ -48,9 +51,10 @@ queue = []
 
 
 def main():
-    '''Parses the config file and initiates a loop of calling process_album()
-       until the user decides they're done with choosing albums, then proceeds
-       to convert all the albums in the queue.'''
+    '''Parses the config file with the help of parse_args_and_config and
+       initiates a loop of calling process_album() until the user decides
+       they're done with choosing albums, then proceeds to convert all the
+       albums in the queue.'''
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", default=None,
@@ -82,6 +86,8 @@ def main():
     print("https://github.com/PokerFacowaty/flac2lib")
 
     while process_album(cfg):
+        # process_album returns True or False depending on the answer to the
+        # question whether the user wants to add another album
         continue
 
     for album in queue:
@@ -89,6 +95,8 @@ def main():
 
 
 def parse_args_and_config(args):
+    '''Merges the config file and args into a cfg dict that is later used
+       wherever config is needed'''
 
     cfg = dict()
 
@@ -273,8 +281,12 @@ def get_dst_album_path(song_picks_paths, dst_albums_dir, dir_prompts):
        multi-CD albums), since doing so automatically would be overly complex
        and only cover some cases. The asking proccess is obviously skipped
        if the --skip-dir-prompts argument is used. Constructs and returns
-       a full destination folder path.'''
+       a full destination folder path. Also returns artist_name and
+       album_name since these are established in the process.'''
 
+    # This looping is so that it covers all possibilities of the spelling I
+    # could think of. 'TAG' and 'ARTIST' covered most cases initially, but then
+    # I came across an exception that would break everything.
     artist_name = None
     album_name = None
     for t in ['TAG', 'tag', 'Tag']:
@@ -454,6 +466,7 @@ def download_cover_art(artist_name, album_name, dst_album_path,
        name should be used and using the album name provided earlier. Takes
        the link to the chosen cover art and downloads with a preffered main
        cover art filename.'''
+
     print("\n\n--- Searching and downloading cover art ---\n")
     print(f"Proposed artist name: " + f"{artist_name}")
     print("Type [y] to confirm or enter the desired artist name instead,",
