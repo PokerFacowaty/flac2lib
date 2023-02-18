@@ -33,7 +33,8 @@ from urllib.request import urlopen
 # Added a proper docstring since it's easier than refactoring.
 # DONE: proper comments / docstrings
 # DONE: type hints
-# TODO: input validations from inpit-validation-notes
+# DONE: input validations from inpit-validation-notes
+# just need testing
 
 
 class AlbumToProcess:
@@ -227,7 +228,9 @@ def get_flac_album_path(flac_albums_dir, num_albums_to_show, latest) -> Path:
 
     while True:
         answer = input("\nChoose the album\n:")
-        if answer.isnumeric():
+        if (answer.isnumeric()
+           and int(answer) < (min(len(folder_paths_to_show),
+                                  num_albums_to_show))):
             return folder_paths_to_show[int(answer)]
 
 
@@ -260,15 +263,24 @@ def pick_songs(flac_album_path, entire) -> list:
 
         while True:
             answer = input("Choose songs, comma separated\n:")
+
             valid = True
-            for num in answer.split(","):
-                if not num.isnumeric():
-                    print("Invalid input\n")
-                    valid = False
-                    break
+            if len(answer.split(",")) > len(all_flac_files_paths):
+                valid = False
+            else:
+                # no point in even starting this loop if the list is longer
+                for num in answer.split(","):
+                    if not num.isnumeric():
+                        valid = False
+                        break
+                    elif int(num) >= len(all_flac_files_paths):
+                        valid = False
+                        break
+
             if valid:
                 break
             else:
+                print("Invalid input\n")
                 continue
         song_picks = [int(x) for x in str(answer).split(',')]
     return [all_flac_files_paths[x] for x in song_picks]
