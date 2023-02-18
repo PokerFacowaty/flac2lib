@@ -32,7 +32,7 @@ from urllib.request import urlopen
 # misleading
 # Added a proper docstring since it's easier than refactoring.
 # DONE: proper comments / docstrings
-# TODO: type hints
+# DONE: type hints
 # TODO: input validations from inpit-validation-notes
 
 
@@ -94,7 +94,7 @@ def main():
         convert_songs(album)
 
 
-def parse_args_and_config(args):
+def parse_args_and_config(args) -> dict:
     '''Merges the config file and args into a cfg dict that is later used
        wherever config is needed'''
 
@@ -154,7 +154,7 @@ def parse_args_and_config(args):
     return cfg
 
 
-def process_album(cfg):
+def process_album(cfg) -> bool:
     '''Gets all the info that is needed about the album and stores it in an
        AlbumToProcess object inside the queue list.'''
 
@@ -198,7 +198,7 @@ def process_album(cfg):
             return False
 
 
-def get_flac_album_path(flac_albums_dir, num_albums_to_show, latest):
+def get_flac_album_path(flac_albums_dir, num_albums_to_show, latest) -> Path:
     '''Fetches folders inside flac_albums_dir containing flac files (note that
        with multi-CD albums, each CD is treated as a separate album since that
        is the best way of dealing with those I thought of), sorts them
@@ -231,7 +231,7 @@ def get_flac_album_path(flac_albums_dir, num_albums_to_show, latest):
             return folder_paths_to_show[int(answer)]
 
 
-def ask_if_compilation():
+def ask_if_compilation() -> bool:
     print("\n\n--- Compilation ---\n")
     print("Is the album a compilation? (adds compilation = 1 to the tags)")
     print("[y] / [n]")
@@ -243,7 +243,7 @@ def ask_if_compilation():
             return False
 
 
-def pick_songs(flac_album_path, entire):
+def pick_songs(flac_album_path, entire) -> list:
     '''Fetches all the flac files found in the album path, takes user input
        on which ones should be chosen and returns the paths for those. Returns
        all paths found if 'entire' is set to True.'''
@@ -364,7 +364,7 @@ def get_dst_album_path(song_picks_paths, dst_albums_dir, dir_prompts):
     return artist_name, album_name, dst_album_path
 
 
-def get_cover_art(cfg):
+def get_cover_art(cfg) -> None:
     '''Fetches all images with proper suffixes found in the flac_album_path.
        Offers options to choose a main cover art file (copied directly into the
        destination folder), copy additional cover art preserving the folder
@@ -461,7 +461,7 @@ def get_cover_art(cfg):
 
 
 def download_cover_art(artist_name, album_name, dst_album_path,
-                       default_cover_art_name):
+                       default_cover_art_name) -> None:
     '''Prepares a query for covers.musichoaders.xyz by asking whether artist
        name should be used and using the album name provided earlier. Takes
        the link to the chosen cover art and downloads with a preffered main
@@ -503,7 +503,7 @@ def download_cover_art(artist_name, album_name, dst_album_path,
     print(f"\nSuccesfully downloaded {covert_art_file.name}")
 
 
-def convert_songs(album):
+def convert_songs(album) -> None:
     '''Converts all flac files into dst_format preserving subdirs. Checks if
        songs already exist. Makes subdirs if they don't exist.'''
 
