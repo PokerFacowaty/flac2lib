@@ -31,6 +31,7 @@ from urllib.request import urlopen
 # TODO: 295 and more - only spaces should still be considered as blank
 # TODO: get_dst_album_path also returns artist and album name which is
 # misleading
+# TODO: proper comments / docstrings
 
 
 class AlbumToProcess:
