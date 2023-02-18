@@ -27,8 +27,7 @@ from urllib.request import urlopen
 # DONE: if entire first makes more sense in 214
 # DONE: lowercase "tag" in get_dst_album_path?
 # along with a new sytem for tags with looping over all possibilities
-# TODO: 255 & 275 looks cluttered, might need a comment at the very least
-# TODO: 295 and more - only spaces should still be considered as blank
+# DONE: 295 and more - only spaces should still be considered as blank
 # TODO: get_dst_album_path also returns artist and album name which is
 # misleading
 # TODO: proper comments / docstrings
@@ -302,7 +301,7 @@ def get_dst_album_path(song_picks_paths, dst_albums_dir, dir_prompts):
             if artist_name and artist_name_answer.lower() == "y":
                 dst_album_path = dst_albums_dir / f"{artist_name}"
                 break
-            elif artist_name_answer:
+            elif artist_name_answer.strip():
                 dst_album_path = dst_albums_dir / artist_name_answer
                 break
     elif not dir_prompts and artist_name:
@@ -327,7 +326,7 @@ def get_dst_album_path(song_picks_paths, dst_albums_dir, dir_prompts):
             if album_name and album_name_answer.lower() == "y":
                 dst_album_path = dst_album_path / f"{album_name}"
                 break
-            elif album_name_answer:
+            elif album_name_answer.strip():
                 dst_album_path = dst_album_path / album_name_answer
                 break
     elif not dir_prompts and album_name:
