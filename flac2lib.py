@@ -192,7 +192,7 @@ def process_album(cfg) -> bool:
         return False
 
     while True:
-        answer = input("\nWould you like to add more albums? [y/n]\n")
+        answer = input("\nWould you like to add more albums? [y/n]\n:")
         if answer.lower() == "y":
             return True
         elif answer.lower() == "n":
