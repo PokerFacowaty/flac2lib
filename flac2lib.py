@@ -10,32 +10,6 @@ from pydub.utils import mediainfo
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
-# DONE: sorted imports
-# DONE: argparse
-# DONE: ? config parsing as a function separate from main?
-# DONE: process_album uses a fuckton of variables, some of them from
-# AlbumToProcess, maybe it can be used?
-# AlbumToProccess is created in that function, so no, but solved with cfg
-# DONE: skipping question about more albums when there was source / dst path
-# specified in an argument (since you're only converting one then)
-# TODO: variable names to simplify / shorten
-# DONE: whiles for inputs, so only particular inputs are accepted and nothing
-# happens for others - either implement everywhere or change;
-# implementing everywhere + validation
-# DONE: test if all of them are breaking properly
-# DONE: consistent prints
-# DONE: if entire first makes more sense in 214
-# DONE: lowercase "tag" in get_dst_album_path?
-# along with a new sytem for tags with looping over all possibilities
-# DONE: 295 and more - only spaces should still be considered as blank
-# DONE: get_dst_album_path also returns artist and album name which is
-# misleading
-# Added a proper docstring since it's easier than refactoring.
-# DONE: proper comments / docstrings
-# DONE: type hints
-# DONE: input validations from inpit-validation-notes
-# just need testing
-
 
 class AlbumToProcess:
     def __init__(self, dst_album_path, song_picks_paths, flac_album_path,
