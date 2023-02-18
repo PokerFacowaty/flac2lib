@@ -25,7 +25,8 @@ from urllib.request import urlopen
 # DONE: test if all of them are breaking properly
 # DONE: consistent prints
 # DONE: if entire first makes more sense in 214
-# TODO: lowercase "tag" in get_dst_album_path?
+# DONE: lowercase "tag" in get_dst_album_path?
+# along with a new sytem for tags with looping over all possibilities
 # TODO: 255 & 275 looks cluttered, might need a comment at the very least
 # TODO: 295 and more - only spaces should still be considered as blank
 # TODO: get_dst_album_path also returns artist and album name which is
@@ -274,23 +275,18 @@ def get_dst_album_path(song_picks_paths, dst_albums_dir, dir_prompts):
        if the --skip-dir-prompts argument is used. Constructs and returns
        a full destination folder path.'''
 
-    if ('TAG' in mediainfo(song_picks_paths[0])
-       and 'ARTIST' in mediainfo(song_picks_paths[0])['TAG']):
-        artist_name = mediainfo(song_picks_paths[0]).get('TAG', None)['ARTIST']
-    elif ('TAG' in mediainfo(song_picks_paths[0])
-          and 'artist' in mediainfo(song_picks_paths[0])['TAG']):
-        artist_name = mediainfo(song_picks_paths[0]).get('TAG', None)['artist']
-    else:
-        artist_name = None
-
-    if ('TAG' in mediainfo(song_picks_paths[0])
-       and 'ALBUM' in mediainfo(song_picks_paths[0])['TAG']):
-        album_name = mediainfo(song_picks_paths[0]).get('TAG', None)['ALBUM']
-    elif ('TAG' in mediainfo(song_picks_paths[0])
-          and 'album' in mediainfo(song_picks_paths[0])['TAG']):
-        album_name = mediainfo(song_picks_paths[0]).get('TAG', None)['album']
-    else:
-        album_name = None
+    artist_name = None
+    album_name = None
+    for t in ['TAG', 'tag', 'Tag']:
+        for ar in ['ARTIST', 'artist', 'Artist']:
+            if (t in mediainfo(song_picks_paths[0])
+               and ar in mediainfo(song_picks_paths[0])[t]):
+                artist_name = mediainfo(song_picks_paths[0]).get(t, None)[ar]
+                break
+        for al in ['ALBUM', 'album', 'Album']:
+            if (t in mediainfo(song_picks_paths[0])
+               and al in mediainfo(song_picks_paths[0])[t]):
+                album_name = mediainfo(song_picks_paths[0]).get(t, None)[al]
 
     if dir_prompts:
         print("\n\n--- Destination folder name ---\n")
