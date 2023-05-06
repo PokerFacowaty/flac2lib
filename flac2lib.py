@@ -275,16 +275,17 @@ def get_dst_album_path(song_picks_paths, dst_albums_dir, dir_prompts):
     # I came across an exception that would break everything.
     artist_name = None
     album_name = None
+    # Corrected the mistake of reading metadata from the file every loop
+    info = mediainfo(song_picks_paths[0])
     for t in ['TAG', 'tag', 'Tag']:
         for ar in ['ARTIST', 'artist', 'Artist']:
-            if (t in mediainfo(song_picks_paths[0])
-               and ar in mediainfo(song_picks_paths[0])[t]):
-                artist_name = mediainfo(song_picks_paths[0]).get(t, None)[ar]
+            if (t in info and ar in info[t]):
+                artist_name = info.get(t, None)[ar]
                 break
         for al in ['ALBUM', 'album', 'Album']:
-            if (t in mediainfo(song_picks_paths[0])
-               and al in mediainfo(song_picks_paths[0])[t]):
-                album_name = mediainfo(song_picks_paths[0]).get(t, None)[al]
+            if (t in info and al in info[t]):
+                album_name = info.get(t, None)[al]
+                break
 
     if dir_prompts:
         print("\n\n--- Destination folder name ---\n")
