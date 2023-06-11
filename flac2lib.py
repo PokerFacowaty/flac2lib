@@ -84,12 +84,12 @@ def parse_args_and_config(args) -> dict:
     if args.source is None:
         cfg["flac_album_path"] = None
     else:
-        cfg["flac_album_path"] = args.source
+        cfg["flac_album_path"] = Path(args.source)
 
     if args.destination is None:
         cfg["dst_album_path"] = None
     else:
-        cfg["dst_album_path"] = args.destination
+        cfg["dst_album_path"] = Path(args.destination)
 
     if args.entire is None:
         cfg["entire"] = yaml_config["entire"]
