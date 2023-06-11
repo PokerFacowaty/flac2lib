@@ -225,13 +225,13 @@ def pick_songs(flac_album_path, entire) -> list:
        on which ones should be chosen and returns the paths for those. Returns
        all paths found if 'entire' is set to True.'''
 
-    all_flac_files_paths = list(flac_album_path.rglob("*.flac"))
+    all_flac_files_paths = sorted(list(flac_album_path.rglob("*.flac")))
 
     if entire:
         song_picks = list(range(len(all_flac_files_paths)))
     else:
         print("\n\n--- Songs ---\n")
-        for nr, f in enumerate(sorted([x.name for x in all_flac_files_paths])):
+        for nr, f in enumerate([x.name for x in all_flac_files_paths]):
             print(nr, ": ", f)
         print()
 
