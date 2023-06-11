@@ -111,11 +111,11 @@ def parse_args_and_config(args) -> dict:
     elif args.skip_dir_prompts:
         cfg["dir_prompts"] = False
 
-    if args.compilation is None and args.not_compilation is None:
+    if args.compilation is False and args.not_compilation is False:
         cfg["is_compilation"] = None
     elif args.compilation:
         cfg["is_compilation"] = True
-    else:
+    elif args.not_compilation:
         cfg["is_compilation"] = False
 
     cfg["flac_albums_dir"] = Path(yaml_config["flac_albums_dir"])
